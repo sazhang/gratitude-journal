@@ -1,88 +1,24 @@
 const express = require('express');
-const app = express();
+const mongoose = require('mongoose');
+require('dotenv/config');
 
+const app = express();
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-const port = process.env.PORT || 3000;
-app.listen(port, () => console.log(`Listening on port ${port}...`));
-
-const entries = [
-  {
-    id: 1,
-    date: new Date('December 1, 2019 11:13:00'),
-    summary: 'A run around Florida’s Fisher Island with a slight breeze that kept me cool',
-    reflection: ''
-  },
-  {
-    id: 2,
-    date: new Date('December 2, 2010 10:15:00'),
-    summary: 'Eating cold melon on a bench in the sun',
-    reflection: ''
-  },
-  {
-    id: 3,
-    date: new Date('December 3, 2010 09:15:00'),
-    summary: 'A long and hilarious chat with Gayle about her blind date with Mr. Potato Head',
-    reflection: ''
-  },
-  {
-    id: 4,
-    date: new Date('December 4, 2010 12:15:00'),
-    summary: 'Sorbet in a cone, so sweet that I literally licked my finger',
-    reflection: ''
-  },
-  {
-    id: 5,
-    date: new Date('December 5, 2010 12:15:00'),
-    summary: 'Maya Angelou calling to read me a new poem',
-    reflection: ''
-  }
-];
+// import routes
+const entriesRoute = require('./routes/entries');
+app.use('/entries', entriesRoute);
 
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
-app.get('/entries', (req, res) => {
-  res.send(entries);
+// connect to database
+mongoose.connect(process.env.DB_CONNECTION, { useNewUrlParser: true, useUnifiedTopology: true }, () => {
+  console.log('connected to mongodb');
 });
 
-app.get('/entries/:id', (req, res) => {
-  const entry = entries.find(e => e.id === parseInt(req.params.id));
-  if (!entry) return res.status(404).send('Not found');
-  res.send(entry);
-});
-
-app.get('/entries/:year/:month', (req, res) => {
-  res.send(req.query);
-});
-
-app.post('/entries', (req, res) => {
-  if (!req.body.summary) return res.status(400).send('Fill out the journal entry');
-  const entry = {
-    id: entries.length + 1,
-    date: Date.now(),
-    summary: req.body.summary,
-    reflection: ''
-  };
-  entries.push(entry);
-  res.send(entry);
-});
-
-app.put('/entries/:id', (req, res) => {
-  const entry = entries.find(e => e.id === parseInt(req.params.id));
-  if (!entry) return res.status(404).send('Not found');
-  if (req.body.summary) entry.summary = req.body.summary;
-  if (req.body.reflection) entry.reflection = req.body.reflection;
-  res.send(entry);
-});
-
-app.delete('/entries/:id', (req, res) => {
-  const entry = entries.find(e => e.id === parseInt(req.params.id));
-  if (!entry) return res.status(404).send('Not found');
-
-  const index = entries.indexOf(entry);
-  entries.splice(index, 1);
-
-  res.send(entry);
-});
+// listen to server
+const port = process.env.PORT || 3000;
+app.listen(port, () => console.log(`Listening on port ${port}...`));
